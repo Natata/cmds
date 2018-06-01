@@ -47,7 +47,10 @@ func (s *srvImpl) Send(ctx context.Context, req *server.Request) (*server.Respon
 			Description: err.Error(),
 		}, nil
 	}
-	return nil, nil
+	return &server.Response{
+		Code:        0,
+		Description: "Success",
+	}, nil
 }
 
 func (s *srvImpl) Register(code Code, action Action, force bool) error {
