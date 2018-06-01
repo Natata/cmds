@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	server "cmds/proto"
 
@@ -16,24 +17,24 @@ func main() {
 	// server side
 	set := cmds.Set{
 		1: func(s string) error {
-			if s == "a" {
-				fmt.Println("get")
+			if s == "btc" {
+				fmt.Println("mining")
 				return nil
 			}
 			return fmt.Errorf("wrong")
 		},
 		2: func(s string) error {
-			if s == "b" {
-				fmt.Println("get")
-				return nil
-			}
-			return fmt.Errorf("wrong")
+			fmt.Println(s)
+			return nil
 		},
 	}
 
 	s := cmds.InitCMDS(set)
 	addr := ":8080"
 	go s.Run(addr)
+
+	// wait server run
+	time.Sleep(2 * time.Second)
 
 	// client side
 	conn, err := grpc.Dial(addr, grpc.WithInsecure())
@@ -45,7 +46,15 @@ func main() {
 	client := server.NewCommandServiceClient(conn)
 	r, err := client.Send(context.Background(), &server.Request{
 		Code:  1,
-		Param: "a",
+		Param: "btc",
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(r)
+	r, err = client.Send(context.Background(), &server.Request{
+		Code:  1,
+		Param: "eth",
 	})
 	if err != nil {
 		panic(err)
