@@ -1,9 +1,13 @@
 package cmds
 
-import "errors"
+import (
+	"cmds/proto"
+	"context"
+	"errors"
+)
 
 // Code for an action
-type Code = string
+type Code = int32
 
 // Action do something
 type Action = func(s string) error
@@ -18,7 +22,8 @@ var (
 
 // CMDServer interface
 type CMDServer interface {
-	Send(code Code, param string) error
+	//Send(code Code, param string) error
+	server.CommandServiceServer
 	Register(code Code, action Action, force bool) error
 }
 
@@ -33,9 +38,16 @@ func InitCMDS(set Set) CMDServer {
 	}
 }
 
-func (s *srvImpl) Send(code Code, param string) error {
-	err := s.actSet[code](param)
-	return err
+func (s *srvImpl) Send(ctx context.Context, req *server.Request) (*server.Response, error) {
+	act := s.actSet[req.GetCode()]
+	err := act(req.GetParam())
+	if err != nil {
+		return &server.Response{
+			Code:        1,
+			Description: err.Error(),
+		}, nil
+	}
+	return nil, nil
 }
 
 func (s *srvImpl) Register(code Code, action Action, force bool) error {
