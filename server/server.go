@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // Code for an action
@@ -29,7 +30,7 @@ type CMDServer interface {
 	//Send(code Code, param string) error
 	server.CommandServiceServer
 	Register(code Code, action Action, force bool) error
-	Run(addr string)
+	Run(addr string, opts ...grpc.ServerOption)
 }
 
 type srvImpl struct {
@@ -73,14 +74,24 @@ func (s *srvImpl) Register(code Code, action Action, force bool) error {
 	return nil
 }
 
-func (s *srvImpl) Run(addr string) {
+func (s *srvImpl) Run(addr string, opts ...grpc.ServerOption) {
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalf("failed to run: %v", err)
 	}
 	log.Printf("listen at: %v", addr)
 	ss := s
-	gsrv := grpc.NewServer()
+	gsrv := grpc.NewServer(opts...)
 	server.RegisterCommandServiceServer(gsrv, ss)
 	gsrv.Serve(lis)
+}
+
+// CreateCred is helper to create creadential for grpc server
+func CreateCred(certFile, keyFile string) (grpc.ServerOption, error) {
+	creds, err := credentials.NewServerTLSFromFile(certFile, keyFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return grpc.ServerOption(grpc.Creds(creds)), nil
 }
