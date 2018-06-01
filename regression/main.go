@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 
 	server "cmds/proto"
 
@@ -13,6 +12,8 @@ import (
 )
 
 func main() {
+
+	// server side
 	set := cmds.Set{
 		1: func(s string) error {
 			if s == "a" {
@@ -31,18 +32,10 @@ func main() {
 	}
 
 	s := cmds.InitCMDS(set)
-
 	addr := ":8080"
-	lis, err := net.Listen("tcp", addr)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	log.Printf("listen at: %v", addr)
+	go s.Run(addr)
 
-	gserv := grpc.NewServer()
-	server.RegisterCommandServiceServer(gserv, s)
-	go gserv.Serve(lis)
-
+	// client side
 	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
 		panic(err)

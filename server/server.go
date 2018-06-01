@@ -4,6 +4,10 @@ import (
 	"cmds/proto"
 	"context"
 	"errors"
+	"log"
+	"net"
+
+	"google.golang.org/grpc"
 )
 
 // Code for an action
@@ -25,6 +29,7 @@ type CMDServer interface {
 	//Send(code Code, param string) error
 	server.CommandServiceServer
 	Register(code Code, action Action, force bool) error
+	Run(addr string)
 }
 
 type srvImpl struct {
@@ -66,4 +71,16 @@ func (s *srvImpl) Register(code Code, action Action, force bool) error {
 
 	s.actSet[code] = action
 	return nil
+}
+
+func (s *srvImpl) Run(addr string) {
+	lis, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("failed to run: %v", err)
+	}
+	log.Printf("listen at: %v", addr)
+	ss := s
+	gsrv := grpc.NewServer()
+	server.RegisterCommandServiceServer(gsrv, ss)
+	gsrv.Serve(lis)
 }
