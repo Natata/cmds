@@ -20,26 +20,41 @@ set := cmds.Set{
 }   
 s := cmds.InitCMDS(set)
 ```
+
 ### Run the server
 ```
 addr := ":8080"
 s.Run(addr)
 ```
 
+### Run the server with TLS
+```
+credOpt, _ := cmds.CreateCred(*certFile, *keyFile)
+addr := ":8080"
+s.Run(addr, credOpt)
+```
+
 ## Client side
+
+### create client
+```
+cli, _ := client.InitClient(addr)
+```
+
+### create client with TLS
+```
+cred, _ := client.CreateCred(*certFile, *serverName)
+cli, _ := client.InitClient(addr, cred)
+```
+
 ### send the code and param
 ```
-conn, _ := grpc.Dial(addr, grpc.WithInsecure())
-client := server.NewCommandServiceClient(conn)
-r, _ := client.Send(context.Background(), &server.Request{
-    Code:  1,
-    Param: "btc",
-})
-fmt.Println(r)
+err = cli.Send(1, "btc")
+if err != nil {
+	panic(err)
+}
+fmt.Println("success")
 
-r, _ = client.Send(context.Background(), &server.Request{
-    Code:  1,
-    Param: "eth",
-})
-fmt.Println(r)
+err = cli.Send(1, "eth")
+fmt.Println(err)
 ```
